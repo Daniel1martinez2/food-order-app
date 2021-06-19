@@ -14,15 +14,44 @@ import CartContext from "./cart-context";
  const cartItemsReducer = (state, action) => {
   switch (action.type) {
     case ACTIONS.ADD_ITEM:
-      const updatedItems = state.items.concat(action.payLoad.item);
       const updatedTotalAmount = state.totalAmount + action.payLoad.item.price * action.payLoad.item.amount;
+      const existingCartItemIndex = state.items.findIndex(
+        item=> item.id === action.payLoad.item.id
+      ); 
+      const existingCartItem = state.items[existingCartItemIndex]; 
+      let updatedItems; 
+      if(existingCartItem){
+        const updatedItem = {
+          ...existingCartItem, 
+          amount: existingCartItem.amount + action.payLoad.item.amount
+        }; 
+        updatedItems = [...state.items]; 
+        updatedItems[existingCartItemIndex] = updatedItem; 
+      }else{
+        updatedItems = state.items.concat(action.payLoad.item);   
+      }
       return {
         items: updatedItems,
         totalAmount: updatedTotalAmount
       };
 
     case ACTIONS.REMOVE_ITEM:
-      return 
+      let copyCat =  [...state.items];
+      let removedIndex = copyCat.findIndex(i => i.id === action.payLoad.id); 
+      const updatedRemovedAmount = state.totalAmount - copyCat[removedIndex].price; 
+      if(copyCat[removedIndex].amount - 1 > 0){
+        const modified = {
+          ...copyCat[removedIndex],
+          amount: copyCat[removedIndex].amount - 1
+        }; 
+        copyCat[removedIndex] = modified; 
+      }else{
+        copyCat.splice(removedIndex,1); 
+      }
+      return {
+        items:  copyCat,
+        totalAmount: updatedRemovedAmount
+      }
     case ACTIONS.UPDATE_ITEM:
       return 
     default:
@@ -32,12 +61,12 @@ import CartContext from "./cart-context";
       }; 
   }
 }
+//COMPONENTE 🔥 🔥 🔥
 const CartProvider = props => {
 
   //FUNCIONES que tendran acceso los componentes que sean wrap por el provider ⚠️ ⚠️ ⚠️
   const addItemToCartHandler = (item) => {
     dispatchCartAction({type: ACTIONS.ADD_ITEM, payLoad:{item:item}})
-    // console.log(item,'🍔');
   }
   const removeItemFromCartHandler = (id ) => {
     dispatchCartAction({type: ACTIONS.REMOVE_ITEM, payLoad:{id:id}})
